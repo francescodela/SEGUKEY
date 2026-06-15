@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Gestión de Usuarios</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     GESTIÓN DE USUARIOS (CRUD completo)
+     Prototipo: lista con filtros por rol y estado,
+     crear, editar y suspender/eliminar usuarios.
+     CRUD en BD: INSERT, SELECT, UPDATE, DELETE sobre tabla 'usuario'
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Gestión de Usuarios</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Usuarios del Sistema</h1>
+                <p class="content-header__sub">Administra roles, permisos y estados de todos los usuarios</p>
+            </div>
+
+            <!-- Toolbar: búsqueda + filtros + botón crear -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <input class="form-input" type="text" id="search-input" placeholder="Buscar por nombre o correo...">
+                </div>
+                <select class="filter-select" id="filter-rol">
+                    <option value="">Todos los roles</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Empleado">Empleado</option>
+                    <option value="Tester">Tester</option>
+                </select>
+                <select class="filter-select" id="filter-estado">
+                    <option value="">Todos los estados</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Suspendido">Suspendido</option>
+                </select>
+                <button class="btn btn--primary" id="btn-crear">+ Nuevo Usuario</button>
+            </div>
+
+            <!-- Tabla de usuarios (READ) -->
+            <div class="table-wrapper">
+                <table class="data-table" id="usuarios-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Creado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuarios-body"></tbody>
+                </table>
+            </div>
+            <p class="text-xs text-muted" style="margin-top:var(--space-3)" id="total-label"></p>
+        </div>
+    </main>
+</div>
+
+<!-- ===== MODAL CREAR / EDITAR USUARIO ===== -->
+<div class="modal-overlay hidden" id="modal-usuario">
+    <div class="modal">
+        <div class="modal__header">
+            <span class="modal__title" id="modal-title">Crear Usuario</span>
+            <button class="modal__close" onclick="Modal.close('modal-usuario')">×</button>
+        </div>
+        <div class="modal__body">
+            <form id="form-usuario" novalidate>
+                <input type="hidden" id="edit-id">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="u-nombre">Nombre *</label>
+                        <input class="form-input" type="text" id="u-nombre" placeholder="Nombre">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="u-apellido">Apellido *</label>
+                        <input class="form-input" type="text" id="u-apellido" placeholder="Apellido">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="u-correo">Correo *</label>
+                    <input class="form-input" type="email" id="u-correo" placeholder="correo@empresa.com">
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="u-pass">Contraseña *</label>
+                        <input class="form-input" type="password" id="u-pass" placeholder="Contraseña">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="u-codigo">Código Especial *</label>
+                        <input class="form-input" type="text" id="u-codigo" placeholder="SK-XXX-000"
+                               style="font-family:var(--font-mono)">
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="u-rol">Rol *</label>
+                        <select class="form-select" id="u-rol">
+                            <option value="">— Seleccionar —</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Empleado">Empleado</option>
+                            <option value="Tester">Tester</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="u-estado">Estado</label>
+                        <select class="form-select" id="u-estado">
+                            <option value="Activo">Activo</option>
+                            <option value="Suspendido">Suspendido</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Campos de perfil -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="u-cargo">Cargo</label>
+                        <input class="form-input" type="text" id="u-cargo" placeholder="Cargo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="u-area">Área / Departamento</label>
+                        <input class="form-input" type="text" id="u-area" placeholder="Área">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="u-tel">Teléfono</label>
+                    <input class="form-input" type="text" id="u-tel" placeholder="300 000 0000">
+                </div>
+
+                <!-- Permisos granulares (solo admin puede asignar) -->
+                <div class="form-group">
+                    <label class="form-label">Permisos del Usuario</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="p-archivos"> Ver archivos protegidos
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="p-editar"> Editar usuarios
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="p-auditoria"> Ver auditoría y logs
+                        </label>
+                    </div>
+                </div>
+
+                <div id="form-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                     background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                     border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)"></div>
+            </form>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" onclick="Modal.close('modal-usuario')">Cancelar</button>
+            <button class="btn btn--primary" id="btn-guardar" onclick="guardarUsuario()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script>
+    let allUsuarios = [];
+
+    (async function init() {
+        DB.init();
+        const currentUser = Session.requireRole('Administrador');
+        if (currentUser) {
+            renderSidebar('nav-usuarios', currentUser);
+            startClock('clock');
+            await renderTabla();
+            bindFiltros();
+        }
+    })();
+
+    /* ---- READ: renderizar tabla de usuarios ---- */
+    async function renderTabla() {
+        const busqueda = document.getElementById('search-input').value.toLowerCase();
+        const filtroRol = document.getElementById('filter-rol').value;
+        const filtroEst = document.getElementById('filter-estado').value;
+
+        allUsuarios = await DB.usuarios.getAll();
+
+        let lista = allUsuarios.filter(u => {
+            const matchText = !busqueda ||
+                (u.nombre + ' ' + u.apellido).toLowerCase().includes(busqueda) ||
+                u.correo.toLowerCase().includes(busqueda);
+            const matchRol = !filtroRol || u.rol === filtroRol;
+            const matchEst = !filtroEst || u.estado === filtroEst;
+            return matchText && matchRol && matchEst;
+        });
+
+        const tbody = document.getElementById('usuarios-body');
+        document.getElementById('total-label').textContent = `${lista.length} usuario(s) encontrado(s)`;
+
+        if (!lista.length) { tbody.innerHTML = emptyRow(7, 'No se encontraron usuarios con esos filtros.'); return; }
+
+        tbody.innerHTML = lista.map(u => `
+            <tr>
+                <td class="text-muted text-xs font-mono">#${u.id}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:var(--space-2)">
+                        <div style="width:32px;height:32px;border-radius:50%;background:var(--color-primary-glow);
+                             border:1px solid var(--color-primary);display:flex;align-items:center;justify-content:center;
+                             font-weight:700;font-size:var(--size-xs);color:var(--color-primary);flex-shrink:0">
+                            ${u.nombre[0]}${u.apellido[0]}
+                        </div>
+                        <div>
+                            <div style="font-weight:500">${u.nombre} ${u.apellido}</div>
+                            <div class="text-xs text-muted">${u.cargo || '—'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-sm text-muted">${u.correo}</td>
+                <td>${Badge.rol(u.rol)}</td>
+                <td>${Badge.estado(u.estado)}</td>
+                <td class="text-xs text-muted">${fmtDate(u.fecha_creacion)}</td>
+                <td>
+                    <div class="table-actions">
+                        <button class="btn btn--ghost btn--sm" onclick="abrirEditar(${u.id})" title="Editar">Editar</button>
+                        <button class="btn btn--ghost btn--sm" onclick="toggleEstado(${u.id})" title="${u.estado==='Activo'?'Suspender':'Activar'}">
+                            ${u.estado === 'Activo' ? 'Suspender' : 'Activar'}
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="eliminarUsuario(${u.id})" title="Eliminar">Eliminar</button>
+                    </div>
+                </td>
+            </tr>`).join('');
+    }
+
+    function bindFiltros() {
+        document.getElementById('search-input').addEventListener('input', renderTabla);
+        document.getElementById('filter-rol').addEventListener('change', renderTabla);
+        document.getElementById('filter-estado').addEventListener('change', renderTabla);
+        document.getElementById('btn-crear').addEventListener('click', abrirCrear);
+    }
+
+    /* ---- CREATE: abrir modal vacío ---- */
+    function abrirCrear() {
+        document.getElementById('modal-title').textContent = 'Crear Nuevo Usuario';
+        document.getElementById('form-usuario').reset();
+        document.getElementById('edit-id').value = '';
+        document.getElementById('form-error').style.display = 'none';
+        // Generar código especial sugerido
+        document.getElementById('u-codigo').value = 'SK-' + Math.random().toString(36).substr(2,3).toUpperCase() + '-' + Math.floor(Math.random()*900+100);
+        Modal.open('modal-usuario');
+    }
+
+    /* ---- UPDATE: abrir modal con datos del usuario ---- */
+    function abrirEditar(id) {
+        const u = allUsuarios.find(x => x.id === id);
+        if (!u) return;
+        document.getElementById('modal-title').textContent = 'Editar Usuario';
+        document.getElementById('edit-id').value = id;
+        document.getElementById('u-nombre').value    = u.nombre;
+        document.getElementById('u-apellido').value  = u.apellido;
+        document.getElementById('u-correo').value    = u.correo;
+        document.getElementById('u-pass').value      = '';
+        document.getElementById('u-codigo').value    = u.codigo_autorizacion;
+        document.getElementById('u-rol').value       = u.rol;
+        document.getElementById('u-estado').value    = u.estado;
+        document.getElementById('u-cargo').value     = u.cargo || '';
+        document.getElementById('u-area').value      = u.area_departamento || '';
+        document.getElementById('u-tel').value       = u.telefono || '';
+        document.getElementById('p-archivos').checked = u.permiso_ver_archivos;
+        document.getElementById('p-editar').checked   = u.permiso_editar_usuarios;
+        document.getElementById('p-auditoria').checked = u.permiso_ver_auditoria;
+        document.getElementById('form-error').style.display = 'none';
+        document.getElementById('u-pass').placeholder = 'Dejar en blanco para no cambiar';
+        Modal.open('modal-usuario');
+    }
+
+    /* ---- Guardar (CREATE o UPDATE) ---- */
+    async function guardarUsuario() {
+        const errDiv = document.getElementById('form-error');
+        errDiv.style.display = 'none';
+
+        const editId = document.getElementById('edit-id').value;
+
+        const data = {
+            nombre:               document.getElementById('u-nombre').value.trim(),
+            apellido:             document.getElementById('u-apellido').value.trim(),
+            correo:               document.getElementById('u-correo').value.trim(),
+            codigo_autorizacion:  document.getElementById('u-codigo').value.trim(),
+            rol:                  document.getElementById('u-rol').value,
+            estado:               document.getElementById('u-estado').value,
+            cargo:                document.getElementById('u-cargo').value.trim(),
+            area_departamento:    document.getElementById('u-area').value.trim(),
+            telefono:             document.getElementById('u-tel').value.trim(),
+            permiso_ver_archivos:    document.getElementById('p-archivos').checked,
+            permiso_editar_usuarios: document.getElementById('p-editar').checked,
+            permiso_ver_auditoria:   document.getElementById('p-auditoria').checked,
+        };
+
+        const pass = document.getElementById('u-pass').value;
+        // Solo enviar contraseña si se escribió algo (en edición es opcional)
+        if (pass) data.contrasena = pass;
+
+        if (!data.nombre || !data.apellido || !data.correo || !data.rol || !data.codigo_autorizacion || (!editId && !pass)) {
+            errDiv.textContent = 'Completa todos los campos obligatorios (*)';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        let result;
+        try {
+            if (editId) {
+                // UPDATE
+                result = await DB.usuarios.update(parseInt(editId), data);
+            } else {
+                // INSERT (CREATE)
+                result = await DB.usuarios.create(data);
+            }
+        } catch (err) {
+            console.error('Error al guardar usuario:', err);
+            errDiv.textContent = 'No se pudo conectar con el servidor.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        if (!result || !result.ok) {
+            errDiv.textContent = (result && result.msg) || 'Ocurrió un error al guardar.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        Modal.close('modal-usuario');
+        Toast.success(editId ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
+        await renderTabla();
+        updateAlertBadge();
+    }
+
+    /* ---- Activar / Suspender (UPDATE de estado) ---- */
+    async function toggleEstado(id) {
+        const u = allUsuarios.find(x => x.id === id);
+        if (!u) return;
+        const nuevoEstado = u.estado === 'Activo' ? 'Suspendido' : 'Activo';
+        const result = await DB.usuarios.update(id, { estado: nuevoEstado });
+        if (!result || !result.ok) {
+            Toast.error((result && result.msg) || 'No se pudo actualizar el estado.');
+            return;
+        }
+        Toast.info(`Usuario ${u.nombre} ${nuevoEstado === 'Activo' ? 'activado' : 'suspendido'}.`);
+        await renderTabla();
+    }
+
+    /* ---- DELETE: eliminar usuario ---- */
+    function eliminarUsuario(id) {
+        const u = allUsuarios.find(x => x.id === id);
+        if (!u) return;
+        Modal.confirm(
+            `¿Eliminar al usuario <strong>${u.nombre} ${u.apellido}</strong>?<br>
+             <span style="color:var(--color-danger);font-size:var(--size-xs)">Esta acción no se puede deshacer.</span>`,
+            async () => {
+                const r = await DB.usuarios.delete(id);
+                if (!r || !r.ok) { Toast.error((r && r.msg) || 'No se pudo eliminar.'); return; }
+                Toast.success('Usuario eliminado.');
+                await renderTabla();
+            }
+        );
+    }
+</script>
+</body>
+</html>

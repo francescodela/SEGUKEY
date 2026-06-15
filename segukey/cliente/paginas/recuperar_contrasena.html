@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Recuperar Contraseña</title>
+    <link rel="stylesheet" href="../estilos/variables.css">
+    <link rel="stylesheet" href="../estilos/base.css">
+    <link rel="stylesheet" href="../estilos/componentes.css">
+    <link rel="stylesheet" href="../estilos/autenticacion.css">
+</head>
+<body>
+    <!-- ==============================
+         RECUPERACIÓN DE CONTRASEÑA
+         Corresponde al prototipo "Recuperación de contraseña":
+         campos: correo, código especial, rol
+         + pantalla de confirmación inline
+         ============================== -->
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo__text">
+                    <span class="auth-logo__name">SEGUKEY</span>
+                    <span class="auth-logo__tagline">Sistema de Seguridad</span>
+                </div>
+            </div>
+
+            <!-- Formulario (visible por defecto) -->
+            <div id="form-section">
+                <h1 class="auth-title">Recuperar Contraseña</h1>
+                <p class="auth-subtitle">Verifica tu identidad con tu correo, código especial y rol para restablecer tu acceso.</p>
+
+                <form id="form-recuperar" novalidate>
+                    <div class="form-group">
+                        <label class="form-label" for="r-correo">Correo electrónico</label>
+                        <input class="form-input" type="email" id="r-correo" placeholder="correo@empresa.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="r-codigo">Código Especial</label>
+                        <input class="form-input" type="text" id="r-codigo" placeholder="SK-XXXX-000"
+                               style="font-family:var(--font-mono);letter-spacing:0.1em">
+                        <span class="form-hint">El código especial evita resets no autorizados</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="r-rol">Rol</label>
+                        <select class="form-select" id="r-rol">
+                            <option value="">— Selecciona tu rol —</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Empleado">Empleado</option>
+                            <option value="Tester">Tester</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="r-nueva">Nueva Contraseña</label>
+                        <input class="form-input" type="password" id="r-nueva" placeholder="Nueva contraseña">
+                    </div>
+
+                    <div id="r-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                         background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                         border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)">No se encontró un usuario con esos datos. Verifica tu código especial.</div>
+
+                    <button class="btn btn--primary btn--full" type="submit">Restablecer Contraseña</button>
+                </form>
+
+                <div class="auth-links" style="justify-content:center;margin-top:var(--space-5)">
+                    <a href="inicio_sesion.html">Volver al inicio de sesión</a>
+                </div>
+            </div>
+
+            <!-- Pantalla de confirmación (oculta inicialmente) -->
+            <div class="success-inline" id="confirm-section">
+                <div class="success-inline__title">¡Contraseña restablecida!</div>
+                <p class="success-inline__msg">Tu contraseña ha sido actualizada correctamente.<br>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+                <a href="inicio_sesion.html" class="btn btn--primary" style="display:inline-flex;margin-top:var(--space-6)">Ir al inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/interfaz.js"></script>
+    <script>
+        DB.init();
+
+        document.getElementById('form-recuperar').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const correo = document.getElementById('r-correo').value.trim();
+            const codigo = document.getElementById('r-codigo').value.trim();
+            const rol    = document.getElementById('r-rol').value;
+            const nueva  = document.getElementById('r-nueva').value;
+            const errDiv = document.getElementById('r-error');
+
+            errDiv.style.display = 'none';
+
+            // Buscar usuario que coincida con correo + código + rol
+            const user = await DB.usuarios.getByCorreo(correo);
+            if (!user || user.codigo_autorizacion !== codigo || user.rol !== rol || !nueva.trim()) {
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            // Actualizar contraseña en la BD
+            await DB.usuarios.update(user.id, { contrasena: nueva });
+
+            // Mostrar pantalla de confirmación
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('confirm-section').classList.add('show');
+        });
+    </script>
+</body>
+</html>

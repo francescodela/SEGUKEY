@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Iniciar Sesión</title>
+    <link rel="stylesheet" href="../estilos/variables.css">
+    <link rel="stylesheet" href="../estilos/base.css">
+    <link rel="stylesheet" href="../estilos/componentes.css">
+    <link rel="stylesheet" href="../estilos/autenticacion.css">
+</head>
+<body>
+    <!-- ==============================
+         INICIO DE SESIÓN
+         Corresponde al prototipo "Inicio de sesión":
+         campos: nombre, apellido, contraseña, rol, Código Especial
+         + opciones de recuperar contraseña y registrarse
+         ============================== -->
+    <div class="auth-page">
+        <div class="auth-card">
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="auth-logo__text">
+                    <span class="auth-logo__name">SEGUKEY</span>
+                    <span class="auth-logo__tagline">Sistema de Seguridad</span>
+                </div>
+            </div>
+
+            <h1 class="auth-title">Iniciar Sesión</h1>
+            <p class="auth-subtitle">Accede con tus credenciales y código especial</p>
+
+            <!-- Formulario de login -->
+            <form id="form-login" novalidate>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="nombre">Nombre</label>
+                        <input class="form-input" type="text" id="nombre" placeholder="Tu nombre" autocomplete="given-name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="apellido">Apellido</label>
+                        <input class="form-input" type="text" id="apellido" placeholder="Tu apellido" autocomplete="family-name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="correo">Correo electrónico</label>
+                    <input class="form-input" type="email" id="correo" placeholder="correo@empresa.com" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="contrasena">Contraseña</label>
+                    <input class="form-input" type="password" id="contrasena" placeholder="••••••••" autocomplete="current-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="rol">Rol</label>
+                    <select class="form-select" id="rol">
+                        <option value="">— Selecciona tu rol —</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Empleado">Empleado</option>
+                        <option value="Tester">Tester</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="codigo">Código Especial</label>
+                    <input class="form-input" type="text" id="codigo" placeholder="SK-XXXX-000" autocomplete="off"
+                           style="font-family:var(--font-mono);letter-spacing:0.1em">
+                    <span class="form-hint">Segunda capa de verificación asignada por el administrador</span>
+                </div>
+
+                <!-- Error de login -->
+                <div id="login-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                     background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                     border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)">Credenciales inválidas. Verifica tus datos y el código especial.</div>
+
+                <button class="btn btn--primary btn--full" type="submit" id="btn-login">
+                    <span id="btn-login-text">Ingresar al Sistema</span>
+                </button>
+            </form>
+
+            <!-- Links secundarios (prototipo: recuperar contraseña + registrarse) -->
+            <div class="auth-links">
+                <a href="recuperar_contrasena.html">¿Olvidaste tu contraseña?</a>
+                <a href="registro.html">Crear cuenta</a>
+            </div>
+
+            <!-- Credenciales de demo -->
+            <div style="margin-top:var(--space-6);padding:var(--space-4);background:rgba(0,194,255,0.05);
+                 border:1px solid rgba(0,194,255,0.15);border-radius:var(--radius-md)">
+                <p style="font-size:var(--size-xs);font-weight:600;color:var(--color-primary);margin-bottom:var(--space-3);letter-spacing:0.06em;text-transform:uppercase">Usuarios de demostración</p>
+                <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+                    <button class="demo-btn" onclick="fillDemo('admin@segukey.com','Admin123!','Administrador','SK-ADMIN-001','Alnaldo','Brun')">Admin — admin@segukey.com</button>
+                    <button class="demo-btn" onclick="fillDemo('empleado@segukey.com','Emp123!','Empleado','SK-EMP-001','Franklin','Hernández')">Empleado — empleado@segukey.com</button>
+                    <button class="demo-btn" onclick="fillDemo('tester@segukey.com','Test123!','Tester','SK-TEST-001','Carlos','Martínez')">Tester — tester@segukey.com</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .demo-btn {
+            background: transparent;
+            border: 1px solid var(--color-bg-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text-secondary);
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--size-xs);
+            text-align: left;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-mono);
+        }
+        .demo-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            background: var(--color-primary-glow);
+        }
+    </style>
+
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/interfaz.js"></script>
+    <script>
+        // Inicializar BD
+        DB.init();
+
+        // Si ya hay sesión activa, redirigir
+        const activeUser = Session.get();
+        if (activeUser) redirectByRole(activeUser.rol);
+
+        /**
+         * Rellena el formulario con credenciales de demo.
+         * Facilita la evaluación del prototipo.
+         */
+        function fillDemo(correo, pass, rol, codigo, nombre, apellido) {
+            document.getElementById('nombre').value = nombre;
+            document.getElementById('apellido').value = apellido;
+            document.getElementById('correo').value = correo;
+            document.getElementById('contrasena').value = pass;
+            document.getElementById('rol').value = rol;
+            document.getElementById('codigo').value = codigo;
+        }
+
+        /**
+         * Redirige al panel correspondiente según el rol del usuario.
+         * Implementa el requerimiento funcional de redirección automática por rol.
+         */
+        function redirectByRole(rol) {
+            const routes = {
+                'Administrador': 'administrador/panel.html',
+                'Empleado':      'empleado/panel.html',
+                'Tester':        'probador/panel.html'
+            };
+            window.location.href = routes[rol] || 'inicio_sesion.html';
+        }
+
+        /* Manejo del formulario de login */
+        document.getElementById('form-login').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const correo   = document.getElementById('correo').value.trim();
+            const contrasena = document.getElementById('contrasena').value;
+            const rol      = document.getElementById('rol').value;
+            const codigo   = document.getElementById('codigo').value.trim();
+            const errDiv   = document.getElementById('login-error');
+
+            errDiv.style.display = 'none';
+
+            // Validar campos
+            const ok = validateRequired([
+                { el: document.getElementById('nombre'),    msg: 'Ingresa tu nombre' },
+                { el: document.getElementById('apellido'),  msg: 'Ingresa tu apellido' },
+                { el: document.getElementById('correo'),    msg: 'Ingresa tu correo' },
+                { el: document.getElementById('contrasena'),msg: 'Ingresa tu contraseña' },
+                { el: document.getElementById('codigo'),    msg: 'Ingresa el código especial' }
+            ]);
+            if (!rol) {
+                document.getElementById('rol').style.borderColor = 'var(--color-danger)';
+                return;
+            }
+            if (!ok) return;
+
+            // Llamada a la API
+            let user;
+            try {
+                user = await DB.usuarios.login(correo, contrasena, rol, codigo);
+            } catch (err) {
+                console.error('Error al iniciar sesión:', err);
+                errDiv.textContent = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo y la configuración CORS.';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            if (!user) {
+                errDiv.textContent = 'Credenciales inválidas. Verifica tus datos y el código especial.';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            // Guardar sesión y redirigir
+            Session.set(user);
+            Toast.success(`Bienvenido, ${user.nombre}`);
+            setTimeout(() => redirectByRole(user.rol), 800);
+        });
+    </script>
+</body>
+</html>

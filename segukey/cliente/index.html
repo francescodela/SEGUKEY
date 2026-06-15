@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Iniciando</title>
+    <link rel="stylesheet" href="estilos/variables.css">
+    <link rel="stylesheet" href="estilos/base.css">
+    <link rel="stylesheet" href="estilos/autenticacion.css">
+    <style>
+        .splash-steps {
+            position: absolute;
+            bottom: var(--space-8);
+            font-family: var(--font-mono);
+            font-size: var(--size-xs);
+            color: var(--color-text-muted);
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- ==============================
+         PANTALLA DE CARGA / SPLASH
+         Corresponde al prototipo "Pantalla de bienvenida"
+         Muestra identidad visual + indicador de carga
+         ============================== -->
+    <div class="splash-page" id="splash">
+        <div class="splash-logo">
+            <div class="splash-icon"></div>
+            <div class="splash-name">SEGUKEY</div>
+            <div class="splash-tagline">Protegiendo lo que más importa</div>
+        </div>
+
+        <div class="splash-loader">
+            <div class="splash-loader__bar">
+                <div class="splash-loader__fill" id="loader-fill"></div>
+            </div>
+            <div class="splash-loader__text" id="loader-text">Iniciando servicios...</div>
+        </div>
+
+        <div class="splash-steps" id="splash-step"></div>
+    </div>
+
+    <script src="scripts/api.js"></script>
+    <script>
+        /**
+         * Secuencia de carga del splash screen.
+         * Mientras se muestra, el sistema inicializa la BD en localStorage.
+         */
+        const steps = [
+            'Verificando integridad de módulos...',
+            'Conectando a base de datos...',
+            'Cargando módulo de autenticación...',
+            'Inicializando motor de encriptación...',
+            'Preparando interfaz de usuario...',
+            'Sistema listo.'
+        ];
+
+        let progress = 0;
+        const fill = document.getElementById('loader-fill');
+        const text = document.getElementById('loader-text');
+        const stepEl = document.getElementById('splash-step');
+
+        // Inicializar datos de la BD (localStorage)
+        DB.init();
+
+        let i = 0;
+        const interval = setInterval(() => {
+            i++;
+            progress = Math.min(progress + Math.floor(100 / steps.length), 100);
+            fill.style.width = progress + '%';
+            text.textContent = steps[Math.min(i - 1, steps.length - 1)];
+            stepEl.textContent = `[${i}/${steps.length}]`;
+
+            if (i >= steps.length) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    window.location.href = 'paginas/inicio_sesion.html';
+                }, 600);
+            }
+        }, 380);
+    </script>
+</body>
+</html>

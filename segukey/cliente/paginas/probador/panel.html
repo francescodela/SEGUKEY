@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Panel Tester</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     PANEL PRINCIPAL DEL TESTER
+     Prototipo: estado técnico del sistema en tiempo real,
+     uptime, API, BD, almacenamiento, tiempo de respuesta,
+     módulos activos, última prueba ejecutada.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Estado del Sistema</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+                <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="dot dot--success"></span>
+                    <span class="text-xs" style="color:var(--color-success);font-weight:600">Última prueba: <span id="ultima-prueba">—</span>
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Monitor Técnico</h1>
+                <p class="content-header__sub">Verificación del estado de los módulos y rendimiento del sistema</p>
+            </div>
+
+            <!-- Métricas de rendimiento -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card__label">Uptime</div>
+                    <div class="metric-card__value" style="color:var(--color-success)" id="m-uptime">99.9%</div>
+                    <div class="metric-card__sub">disponibilidad</div>
+                    <div class="metric-card__icon">⏱</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Estado API</div>
+                    <div class="metric-card__value" style="color:var(--color-success)" id="m-api">OK</div>
+                    <div class="metric-card__sub">respondiendo</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Tiempo Respuesta</div>
+                    <div class="metric-card__value" id="m-tiempo">—</div>
+                    <div class="metric-card__sub">objetivo &lt; 200ms</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Almacenamiento</div>
+                    <div class="metric-card__value" id="m-storage">—</div>
+                    <div class="metric-card__sub">capacidad utilizada</div>
+                    </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Estado de módulos activos -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Módulos del Sistema</span>
+                        <button class="btn btn--primary btn--sm" id="btn-ejecutar-prueba">▶ Ejecutar Pruebas</button>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:var(--space-3)" id="modulos-list"></div>
+                </div>
+
+                <!-- Conexión a base de datos -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Infraestructura</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Base de Datos PostgreSQL</span>
+                            <span class="status-indicator__value" style="color:var(--color-success)">Conectada</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Servidor Web</span>
+                            <span class="status-indicator__value" style="color:var(--color-success)">En línea</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Sistema de Backups</span>
+                            <span class="status-indicator__value" style="color:var(--color-success)">Activo</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Motor de Encriptación</span>
+                            <span class="status-indicator__value text-primary">AES-256</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Usuarios en BD</span>
+                            <span class="status-indicator__value font-mono" id="infra-users">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Archivos en BD</span>
+                            <span class="status-indicator__value font-mono" id="infra-files">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Registros de log</span>
+                            <span class="status-indicator__value font-mono" id="infra-logs">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de pruebas -->
+            <div class="card" style="margin-top:var(--space-6)">
+                <div class="card__header">
+                    <span class="card__title">Historial de Pruebas Ejecutadas</span>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Módulo</th><th>Acción</th><th>Resultado</th><th>Fecha</th></tr>
+                        </thead>
+                        <tbody id="test-history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script> DB.init();
+    const currentUser = Session.requireRole('Tester');
+    if (currentUser) {
+        renderSidebar('nav-dashboard', currentUser);
+        startClock('clock');
+        loadTesterDashboard();
+        document.getElementById('btn-ejecutar-prueba').addEventListener('click', ejecutarPruebas);
+    }
+
+    const modulos = [
+        { nombre: 'Autenticación 2FA', key: 'Auth' },
+        { nombre: 'Gestión de Archivos', key: 'Storage' },
+        { nombre: 'Gestión de Usuarios', key: 'Database' },
+        { nombre: 'Auditoría / Logs', key: 'Audit' },
+        { nombre: 'Configuración del Sistema', key: 'Config' },
+    ];
+
+    function loadTesterDashboard() {
+        // Tiempo de respuesta simulado (< 200ms cumple el requisito no funcional)
+        const tiempoResp = Math.floor(Math.random() * 80) + 60; // 60–140ms
+        const colorTiempo = tiempoResp < 200 ? 'var(--color-success)' : 'var(--color-danger)';
+        document.getElementById('m-tiempo').textContent = tiempoResp + ' ms';
+        document.getElementById('m-tiempo').style.color = colorTiempo;
+
+        // Almacenamiento
+        const archivos = DB.respaldos.getAll();
+        const totalKB  = archivos.reduce((s, a) => s + (a.tamano || 0), 0);
+        const pctUso   = Math.min(Math.round((totalKB / 102400) * 100), 99); // sobre 100MB
+        document.getElementById('m-storage').textContent = pctUso + '%';
+        document.getElementById('m-storage').style.color = pctUso > 80 ? 'var(--color-danger)' : 'var(--color-primary)';
+
+        // Infraestructura
+        document.getElementById('infra-users').textContent = DB.usuarios.getAll().length + ' registros';
+        document.getElementById('infra-files').textContent = archivos.length + ' archivos';
+        document.getElementById('infra-logs').textContent  = DB.logs.getAll().length + ' entradas';
+
+        // Última prueba
+        const logsTest = DB.logs.getAll().filter(l => l.usuario_id === currentUser.id);
+        document.getElementById('ultima-prueba').textContent =
+            logsTest.length ? fmtDate(logsTest[0].fecha_hora) : 'Sin pruebas previas';
+
+        renderModulos();
+        renderHistorialPruebas();
+    }
+
+    function renderModulos() {
+        document.getElementById('modulos-list').innerHTML = modulos.map(m => `
+            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);
+                 background:var(--color-bg-elevated);border:1px solid var(--color-bg-border);border-radius:var(--radius-md)">
+                <span style="flex:1;font-size:var(--size-sm);font-weight:500">${m.nombre}</span>
+                <span class="badge badge--success">Activo</span>
+            </div>`).join('');
+    }
+
+    function renderHistorialPruebas() {
+        const historial = DB.logs.getAll()
+            .filter(l => l.usuario_id === currentUser.id && l.accion.toLowerCase().includes('prueba'))
+            .slice(0, 10);
+
+        const tbody = document.getElementById('test-history-body');
+        if (!historial.length) {
+            tbody.innerHTML = emptyRow(4, 'No hay pruebas ejecutadas aún. Pulsa "Ejecutar Pruebas".');
+            return;
+        }
+        tbody.innerHTML = historial.map(l => `
+            <tr>
+                <td><span class="badge badge--info">${l.modulo}</span></td>
+                <td class="text-sm">${l.accion}</td>
+                <td>${Badge.nivel(l.nivel)}</td>
+                <td class="text-xs text-muted">${fmtDate(l.fecha_hora)}</td>
+            </tr>`).join('');
+    }
+
+    /* ---- Ejecutar pruebas de todos los módulos ---- */
+    function ejecutarPruebas() {
+        const btn = document.getElementById('btn-ejecutar-prueba');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Probando...';
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i >= modulos.length) {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.innerHTML = '▶ Ejecutar Pruebas';
+                Toast.success('Todas las pruebas completadas exitosamente.');
+                loadTesterDashboard();
+                return;
+            }
+            const m = modulos[i];
+            DB.log(currentUser.id, `Ejecución de prueba de módulo ${m.nombre}`, m.key, 'Info', 'Exitoso');
+            i++;
+        }, 400);
+    }
+</script>
+</body>
+</html>

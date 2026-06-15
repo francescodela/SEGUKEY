@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Registro</title>
+    <link rel="stylesheet" href="../estilos/variables.css">
+    <link rel="stylesheet" href="../estilos/base.css">
+    <link rel="stylesheet" href="../estilos/componentes.css">
+    <link rel="stylesheet" href="../estilos/autenticacion.css">
+</head>
+<body>
+    <!-- ==============================
+         REGISTRO PÚBLICO DE USUARIO
+         Corresponde al prototipo "Registro público de usuario":
+         campos: nombre completo, correo, rol (Admin o Tester), contraseña
+         + pantalla de éxito inline
+         ============================== -->
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo__text">
+                    <span class="auth-logo__name">SEGUKEY</span>
+                    <span class="auth-logo__tagline">Sistema de Seguridad</span>
+                </div>
+            </div>
+
+            <!-- Formulario de registro -->
+            <div id="form-section">
+                <h1 class="auth-title">Crear Cuenta</h1>
+                <p class="auth-subtitle">Regístrate para acceder a la plataforma Segukey</p>
+
+                <form id="form-registro" novalidate>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="reg-nombre">Nombre</label>
+                            <input class="form-input" type="text" id="reg-nombre" placeholder="Tu nombre">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-apellido">Apellido</label>
+                            <input class="form-input" type="text" id="reg-apellido" placeholder="Tu apellido">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-correo">Correo electrónico</label>
+                        <input class="form-input" type="email" id="reg-correo" placeholder="correo@empresa.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-rol">Rol</label>
+                        <select class="form-select" id="reg-rol">
+                            <option value="">— Selecciona tu rol —</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Tester">Tester</option>
+                        </select>
+                        <span class="form-hint">El registro público permite Administrador o Tester. Los empleados son creados por un administrador.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-pass">Contraseña</label>
+                        <input class="form-input" type="password" id="reg-pass" placeholder="Mínimo 8 caracteres">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-pass2">Confirmar contraseña</label>
+                        <input class="form-input" type="password" id="reg-pass2" placeholder="Repite la contraseña">
+                    </div>
+
+                    <div id="reg-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                         background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                         border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)"></div>
+
+                    <button class="btn btn--primary btn--full" type="submit">Crear Cuenta</button>
+                </form>
+
+                <div class="auth-links" style="justify-content:center;margin-top:var(--space-5)">
+                    <a href="inicio_sesion.html">Ya tengo cuenta</a>
+                </div>
+            </div>
+
+            <!-- Pantalla de éxito inline -->
+            <div class="success-inline" id="success-section">
+                <div class="success-inline__title">¡Cuenta creada!</div>
+                <p class="success-inline__msg" id="success-msg">Tu cuenta ha sido registrada exitosamente.<br>Ya puedes iniciar sesión en la plataforma.</p>
+                <a href="inicio_sesion.html" class="btn btn--primary" style="display:inline-flex;margin-top:var(--space-6)">Iniciar Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/interfaz.js"></script>
+    <script>
+        DB.init();
+
+        document.getElementById('form-registro').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const nombre   = document.getElementById('reg-nombre').value.trim();
+            const apellido = document.getElementById('reg-apellido').value.trim();
+            const correo   = document.getElementById('reg-correo').value.trim();
+            const rol      = document.getElementById('reg-rol').value;
+            const pass     = document.getElementById('reg-pass').value;
+            const pass2    = document.getElementById('reg-pass2').value;
+            const errDiv   = document.getElementById('reg-error');
+
+            errDiv.style.display = 'none';
+            clearErrors(this);
+
+            // Validaciones
+            if (!nombre || !apellido || !correo || !rol || !pass || !pass2) {
+                errDiv.textContent = 'Todos los campos son obligatorios.';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (pass !== pass2) {
+                errDiv.textContent = 'Las contraseñas no coinciden.';
+                errDiv.style.display = 'block';
+                return;
+            }
+            if (pass.length < 6) {
+                errDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            // Crear usuario vía API
+            let result;
+            try {
+                result = await DB.usuarios.register({ nombre, apellido, correo, rol, contrasena: pass });
+            } catch (err) {
+                console.error('Error al registrar:', err);
+                errDiv.textContent = 'No se pudo conectar con el servidor.';
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            if (!result.ok) {
+                errDiv.textContent = result.msg;
+                errDiv.style.display = 'block';
+                return;
+            }
+
+            // Mostrar éxito y código especial asignado
+            document.getElementById('success-msg').innerHTML =
+                `Tu cuenta <strong>${nombre} ${apellido}</strong> fue registrada.<br>Tu <strong>Código Especial</strong> es:
+                 <code style="font-family:var(--font-mono);color:var(--color-primary)">${result.data.codigo_autorizacion}</code><br>
+                 <span style="font-size:var(--size-xs);color:var(--color-text-muted)">Guárdalo, lo necesitarás para iniciar sesión.</span>`;
+
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('success-section').classList.add('show');
+        });
+    </script>
+</body>
+</html>

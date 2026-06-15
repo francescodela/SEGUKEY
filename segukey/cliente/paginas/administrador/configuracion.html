@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Configuración</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     CONFIGURACIÓN DEL SISTEMA
+     Prototipo: perfil del admin, parámetros de plataforma,
+     configuraciones técnicas de seguridad.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Configuración</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Configuración del Sistema</h1>
+                <p class="content-header__sub">Gestiona parámetros, políticas de seguridad y perfil de administrador</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Perfil del administrador -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Perfil del Administrador</span>
+                    </div>
+                    <div id="admin-profile"></div>
+                    <div style="margin-top:var(--space-5)">
+                        <button class="btn btn--ghost btn--sm" onclick="Modal.open('modal-perfil')">Editar perfil</button>
+                    </div>
+                </div>
+
+                <!-- Estado del sistema -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Estado de la Plataforma</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Estado del sistema</span>
+                            <span class="status-indicator__value" style="color:var(--color-success)">Operativo</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Algoritmo de cifrado</span>
+                            <span class="status-indicator__value text-primary" id="cfg-cifrado">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Tiempo respuesta máx.</span>
+                            <span class="status-indicator__value" id="cfg-tiempo">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Usuarios concurrentes máx.</span>
+                            <span class="status-indicator__value" id="cfg-usuarios">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Sesión inactiva (min)</span>
+                            <span class="status-indicator__value" id="cfg-sesion">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Backup automático</span>
+                            <span class="status-indicator__value" style="color:var(--color-success)" id="cfg-backup">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Versión del sistema</span>
+                            <span class="status-indicator__value font-mono" id="cfg-version">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parámetros de configuración (CRUD) -->
+            <div class="card" style="margin-top:var(--space-6)">
+                <div class="card__header">
+                    <span class="card__title">Parámetros del Sistema</span>
+                    <button class="btn btn--primary btn--sm" onclick="Modal.open('modal-config')">+ Nuevo Parámetro</button>
+                </div>
+                <div id="config-params" style="display:flex;flex-direction:column;gap:var(--space-3)"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal editar perfil -->
+<div class="modal-overlay hidden" id="modal-perfil">
+    <div class="modal">
+        <div class="modal__header">
+            <span class="modal__title">Editar Perfil</span>
+            <button class="modal__close" onclick="Modal.close('modal-perfil')">×</button>
+        </div>
+        <div class="modal__body">
+            <div class="form-group">
+                <label class="form-label">Nombre completo</label>
+                <input class="form-input" type="text" id="p-nombre-edit">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Correo</label>
+                <input class="form-input" type="email" id="p-correo-edit">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cargo</label>
+                <input class="form-input" type="text" id="p-cargo-edit">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Teléfono</label>
+                <input class="form-input" type="text" id="p-tel-edit">
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" onclick="Modal.close('modal-perfil')">Cancelar</button>
+            <button class="btn btn--primary" onclick="guardarPerfil()">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal nuevo parámetro -->
+<div class="modal-overlay hidden" id="modal-config">
+    <div class="modal" style="max-width:420px">
+        <div class="modal__header">
+            <span class="modal__title">Nuevo Parámetro</span>
+            <button class="modal__close" onclick="Modal.close('modal-config')">×</button>
+        </div>
+        <div class="modal__body">
+            <div class="form-group">
+                <label class="form-label">Clave del parámetro</label>
+                <input class="form-input font-mono" type="text" id="cfg-key" placeholder="nombre_parametro">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Valor</label>
+                <input class="form-input" type="text" id="cfg-val" placeholder="valor">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <input class="form-input" type="text" id="cfg-desc" placeholder="Descripción breve">
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" onclick="Modal.close('modal-config')">Cancelar</button>
+            <button class="btn btn--primary" onclick="guardarConfig()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script>
+    let currentUser;
+    let adminData = null;
+
+    (async function init() {
+        DB.init();
+        currentUser = Session.requireRole('Administrador');
+        if (currentUser) {
+            renderSidebar('nav-config', currentUser);
+            startClock('clock');
+            adminData = await DB.usuarios.getById(currentUser.id);
+            renderPerfil();
+            renderConfigParams();
+        }
+    })();
+
+    const configKey = 'sk_config_params';
+    function getConfig() {
+        const stored = localStorage.getItem(configKey);
+        if (stored) return JSON.parse(stored);
+        const defaults = [
+            { key:'algoritmo_encriptacion', valor:'AES-256', desc:'Cifrado de datos en tránsito y reposo' },
+            { key:'tiempo_respuesta_max_ms', valor:'2000', desc:'Tiempo máximo de respuesta (ms)' },
+            { key:'max_usuarios_concurrentes', valor:'2000', desc:'Máximo de sesiones simultáneas' },
+            { key:'sesion_timeout_min', valor:'30', desc:'Minutos de inactividad antes de cerrar sesión' },
+            { key:'backup_automatico', valor:'true', desc:'Copias de seguridad automáticas' },
+            { key:'version_sistema', valor:'1.0.0', desc:'Versión del sistema Segukey' },
+        ];
+        localStorage.setItem(configKey, JSON.stringify(defaults));
+        return defaults;
+    }
+
+    function renderPerfil() {
+        const u = adminData;
+        document.getElementById('admin-profile').innerHTML = `
+            <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-5)">
+                <div style="width:60px;height:60px;border-radius:50%;background:var(--color-primary-glow);
+                     border:2px solid var(--color-primary);display:flex;align-items:center;justify-content:center;
+                     font-family:var(--font-display);font-size:var(--size-lg);font-weight:700;color:var(--color-primary)">
+                    ${u.nombre[0]}${u.apellido[0]}
+                </div>
+                <div>
+                    <div style="font-family:var(--font-display);font-size:var(--size-md);font-weight:700">
+                        ${u.nombre} ${u.apellido}
+                    </div>
+                    <div class="text-sm text-muted">${u.correo}</div>
+                    <div style="margin-top:var(--space-1)">${Badge.rol(u.rol)}</div>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+                <div class="status-indicator">
+                    <span class="status-indicator__label">Nivel de acceso</span>
+                    <span class="status-indicator__value text-primary">Total</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-indicator__label">Cargo</span>
+                    <span class="status-indicator__value">${u.cargo || '—'}</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-indicator__label">Cuenta creada</span>
+                    <span class="status-indicator__value text-muted text-xs">${fmtDate(u.fecha_creacion)}</span>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-indicator__label">Último acceso</span>
+                    <span class="status-indicator__value text-muted text-xs">${fmtDate(u.ultimo_acceso)}</span>
+                </div>
+            </div>`;
+
+        // Llenar modal de edición
+        document.getElementById('p-nombre-edit').value  = u.nombre + ' ' + u.apellido;
+        document.getElementById('p-correo-edit').value  = u.correo;
+        document.getElementById('p-cargo-edit').value   = u.cargo || '';
+        document.getElementById('p-tel-edit').value     = u.telefono || '';
+
+        // Llenar cards de estado
+        const cfg = getConfig();
+        const find = (k) => cfg.find(c => c.key === k)?.valor || '—';
+        document.getElementById('cfg-cifrado').textContent  = find('algoritmo_encriptacion');
+        document.getElementById('cfg-tiempo').textContent   = find('tiempo_respuesta_max_ms') + ' ms';
+        document.getElementById('cfg-usuarios').textContent = find('max_usuarios_concurrentes');
+        document.getElementById('cfg-sesion').textContent   = find('sesion_timeout_min');
+        document.getElementById('cfg-backup').textContent   = find('backup_automatico') === 'true' ? ' Activo' : ' Inactivo';
+        document.getElementById('cfg-version').textContent  = 'v' + find('version_sistema');
+    }
+
+    function renderConfigParams() {
+        const cfg = getConfig();
+        document.getElementById('config-params').innerHTML = cfg.map((p, i) => `
+            <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);
+                 background:var(--color-bg-elevated);border:1px solid var(--color-bg-border);border-radius:var(--radius-md)">
+                <code style="font-family:var(--font-mono);font-size:var(--size-xs);color:var(--color-primary);
+                      background:rgba(0,194,255,0.08);padding:2px var(--space-2);border-radius:4px;min-width:180px">${p.key}</code>
+                <input class="form-input" type="text" value="${p.valor}" id="param-val-${i}"
+                       style="flex:1;padding:var(--space-2) var(--space-3)">
+                <span class="text-xs text-muted" style="min-width:180px">${p.desc}</span>
+                <button class="btn btn--success btn--sm" onclick="actualizarParam(${i})"></button>
+                <button class="btn btn--danger btn--sm" onclick="eliminarParam(${i})"></button>
+            </div>`).join('');
+    }
+
+    function actualizarParam(i) {
+        const cfg = getConfig();
+        cfg[i].valor = document.getElementById(`param-val-${i}`).value.trim();
+        localStorage.setItem(configKey, JSON.stringify(cfg));
+        DB.log(currentUser.id, `Actualización de parámetro: ${cfg[i].key}`, 'General');
+        Toast.success('Parámetro actualizado.');
+        renderPerfil();
+    }
+
+    function eliminarParam(i) {
+        const cfg = getConfig();
+        Modal.confirm(`¿Eliminar el parámetro <strong>${cfg[i].key}</strong>?`, () => {
+            cfg.splice(i, 1);
+            localStorage.setItem(configKey, JSON.stringify(cfg));
+            renderConfigParams(); renderPerfil();
+            Toast.success('Parámetro eliminado.');
+        });
+    }
+
+    function guardarConfig() {
+        const key  = document.getElementById('cfg-key').value.trim();
+        const val  = document.getElementById('cfg-val').value.trim();
+        const desc = document.getElementById('cfg-desc').value.trim();
+        if (!key || !val) { Toast.error('Clave y valor son obligatorios.'); return; }
+        const cfg = getConfig();
+        cfg.push({ key, valor: val, desc });
+        localStorage.setItem(configKey, JSON.stringify(cfg));
+        Modal.close('modal-config');
+        Toast.success('Parámetro agregado.');
+        renderConfigParams(); renderPerfil();
+    }
+
+    async function guardarPerfil() {
+        const errDiv = document.getElementById('perfil-error');
+        if (errDiv) errDiv.style.display = 'none';
+
+        const nombreCompleto = document.getElementById('p-nombre-edit').value.trim().split(' ');
+        const nombre   = nombreCompleto[0] || adminData.nombre;
+        const apellido = nombreCompleto.slice(1).join(' ') || adminData.apellido;
+        const correo   = document.getElementById('p-correo-edit').value.trim();
+        const cargo    = document.getElementById('p-cargo-edit').value.trim();
+        const tel      = document.getElementById('p-tel-edit').value.trim();
+
+        if (!nombre || !correo) {
+            Toast.error('Nombre y correo son obligatorios.');
+            return;
+        }
+
+        let r;
+        try {
+            r = await DB.usuarios.update(adminData.id, { nombre, apellido, correo, cargo, telefono: tel });
+        } catch (err) {
+            console.error('Error al actualizar perfil:', err);
+            Toast.error('No se pudo conectar con el servidor.');
+            return;
+        }
+
+        if (!r || !r.ok) {
+            Toast.error((r && r.msg) || 'No se pudo actualizar el perfil.');
+            return;
+        }
+
+        adminData = r.data;
+        Session.set(adminData);
+        Modal.close('modal-perfil');
+        Toast.success('Perfil actualizado correctamente.');
+        renderPerfil();
+        fillSidebarUser(adminData);
+    }
+</script>
+</body>
+</html>

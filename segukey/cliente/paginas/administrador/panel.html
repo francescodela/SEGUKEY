@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Panel Administrador</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     PANEL PRINCIPAL DEL ADMINISTRADOR
+     Prototipo: métricas en tiempo real, acceso a secciones
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <span class="topbar__title">Dashboard</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+                <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="dot dot--success"></span>
+                    <span style="font-size:var(--size-xs);color:var(--color-success);font-weight:600">SISTEMA OPERATIVO</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <!-- Encabezado -->
+            <div class="content-header">
+                <h1 class="content-header__title">Panel de Control</h1>
+                <p class="content-header__sub">Monitoreo en tiempo real del sistema Segukey</p>
+            </div>
+
+            <!-- Métricas en tiempo real (req. funcional: monitoreo 24/7) -->
+            <div class="metrics-grid" id="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card__label">Usuarios Activos</div>
+                    <div class="metric-card__value" id="m-usuarios">—</div>
+                    <div class="metric-card__sub">en la plataforma</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Archivos Protegidos</div>
+                    <div class="metric-card__value" id="m-archivos">—</div>
+                    <div class="metric-card__sub">encriptados con AES-256</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Accesos Hoy</div>
+                    <div class="metric-card__value" id="m-accesos">—</div>
+                    <div class="metric-card__sub">inicios de sesión</div>
+                    </div>
+                <div class="metric-card" id="m-alertas-card">
+                    <div class="metric-card__label">Alertas Pendientes</div>
+                    <div class="metric-card__value" id="m-alertas" style="color:var(--color-danger)">—</div>
+                    <div class="metric-card__sub">requieren atención</div>
+                    </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Actividad reciente -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Actividad Reciente</span>
+                        <a href="auditoria.html" class="btn btn--ghost btn--sm">Ver todo</a>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="recent-log-table">
+                            <thead>
+                                <tr>
+                                    <th>Acción</th>
+                                    <th>Módulo</th>
+                                    <th>Nivel</th>
+                                    <th>Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Alertas activas -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Alertas del Sistema</span>
+                        <a href="auditoria.html" class="btn btn--ghost btn--sm">Gestionar</a>
+                    </div>
+                    <div id="alertas-list" style="display:flex;flex-direction:column;gap:var(--space-3)"></div>
+                </div>
+            </div>
+
+            <!-- Usuarios recientes -->
+            <div class="card" style="margin-top:var(--space-6)">
+                <div class="card__header">
+                    <span class="card__title">Usuarios Registrados</span>
+                    <a href="usuarios.html" class="btn btn--primary btn--sm">+ Gestionar</a>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Último acceso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-preview-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script> DB.init();
+    const user = Session.requireRole('Administrador');
+    if (user) {
+        renderSidebar('nav-dashboard', user);
+        startClock('clock');
+        loadDashboard();
+    }
+
+    function loadDashboard() {
+        // Métricas
+        const m = DB.metricas.get();
+        document.getElementById('m-usuarios').textContent = m.usuarios_activos;
+        document.getElementById('m-archivos').textContent = m.archivos_protegidos;
+        document.getElementById('m-accesos').textContent  = m.accesos_hoy;
+        document.getElementById('m-alertas').textContent  = m.alertas_pendientes;
+        if (m.alertas_pendientes > 0) {
+            document.getElementById('m-alertas-card').style.borderColor = 'var(--color-danger)';
+        }
+
+        // Logs recientes (últimos 5)
+        const logs = DB.logs.getAll().slice(0, 5);
+        const users = DB.usuarios.getAll();
+        const tbody = document.getElementById('recent-log-body');
+        if (!logs.length) {
+            tbody.innerHTML = emptyRow(4);
+        } else {
+            tbody.innerHTML = logs.map(l => {
+                const u = users.find(x => x.id === l.usuario_id);
+                return `<tr>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                        title="${l.accion}">${l.accion}</td>
+                    <td><span class="badge badge--info">${l.modulo||'—'}</span></td>
+                    <td>${Badge.nivel(l.nivel)}</td>
+                    <td class="text-muted text-xs">${fmtDate(l.fecha_hora)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Alertas
+        const alertas = DB.alertas.getAll().slice(0, 4);
+        const alertasList = document.getElementById('alertas-list');
+        const sevColor = { 'Alta':'var(--color-danger)', 'Media':'var(--color-warning)', 'Baja':'var(--color-success)', 'Crítica':'var(--color-danger)' };
+        alertasList.innerHTML = alertas.length ? alertas.map(a => `
+            <div style="padding:var(--space-3) var(--space-4);background:var(--color-bg-elevated);
+                 border-radius:var(--radius-md);border-left:3px solid ${sevColor[a.severidad]||'var(--color-primary)'}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2)">
+                    <span style="font-size:var(--size-sm)">${a.mensaje}</span>
+                    ${Badge.estado(a.estado)}
+                </div>
+                <div style="display:flex;gap:var(--space-3);margin-top:var(--space-1)">
+                    <span class="text-xs text-muted">${a.tipo}</span>
+                    <span class="text-xs" style="color:${sevColor[a.severidad]}">${a.severidad}</span>
+                </div>
+            </div>`).join('') : '<p class="text-muted text-sm">No hay alertas pendientes.</p>';
+
+        // Usuarios
+        const uList = DB.usuarios.getAll();
+        document.getElementById('users-preview-body').innerHTML = uList.map(u => `
+            <tr>
+                <td class="text-muted text-xs">#${u.id}</td>
+                <td>${u.nombre} ${u.apellido}</td>
+                <td class="text-muted text-sm">${u.correo}</td>
+                <td>${Badge.rol(u.rol)}</td>
+                <td>${Badge.estado(u.estado)}</td>
+                <td class="text-muted text-xs">${fmtDate(u.ultimo_acceso)}</td>
+            </tr>`).join('');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+/* ============================================================
+   segukey/estilos/autenticacion.css
+   Estilos para las páginas de autenticación
+   ============================================================ */
+
+.auth-page {
+    min-height: 100vh;
+    background: var(--color-bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: var(--space-6);
+}
+
+/* Fondo con efecto de cuadrícula tecnológica */
+.auth-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,194,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,194,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+}
+
+/* Brillo central */
+.auth-page::after {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,194,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.auth-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-bg-border);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 440px;
+    padding: var(--space-8);
+    box-shadow: var(--shadow-card), 0 0 60px rgba(0,194,255,0.05);
+    position: relative;
+    z-index: 1;
+}
+
+/* Línea superior decorativa */
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: var(--space-8); right: var(--space-8);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+}
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-8);
+    justify-content: center;
+}
+
+.auth-logo__icon {
+    width: 48px; height: 48px;
+    background: var(--color-primary-glow);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--color-primary);
+}
+
+.auth-logo__text {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-logo__name {
+    font-family: var(--font-display);
+    font-size: var(--size-xl);
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 0.08em;
+    line-height: 1;
+}
+
+.auth-logo__tagline {
+    font-size: var(--size-xs);
+    color: var(--color-text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.auth-title {
+    font-family: var(--font-display);
+    font-size: var(--size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.auth-subtitle {
+    font-size: var(--size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-6);
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-5);
+    font-size: var(--size-sm);
+}
+
+.auth-divider {
+    height: 1px;
+    background: var(--color-bg-border);
+    margin: var(--space-6) 0;
+    position: relative;
+}
+
+/* Pantalla de carga (Splash) */
+.splash-page {
+    min-height: 100vh;
+    background: var(--color-bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    position: relative;
+    overflow: hidden;
+}
+
+.splash-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,194,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,194,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+.splash-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    position: relative;
+    z-index: 1;
+}
+
+.splash-icon {
+    width: 96px; height: 96px;
+    background: var(--color-primary-glow);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--color-primary);
+    box-shadow: var(--shadow-glow);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.splash-name {
+    font-family: var(--font-display);
+    font-size: var(--size-3xl);
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 40px rgba(0,194,255,0.4);
+}
+
+.splash-tagline {
+    font-size: var(--size-base);
+    color: var(--color-text-secondary);
+    letter-spacing: 0.06em;
+}
+
+.splash-loader {
+    width: 280px;
+    position: relative;
+    z-index: 1;
+}
+
+.splash-loader__bar {
+    height: 2px;
+    background: var(--color-bg-border);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.splash-loader__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), #00FFCC);
+    border-radius: var(--radius-full);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px var(--color-primary);
+}
+
+.splash-loader__text {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-3);
+    letter-spacing: 0.06em;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(0,194,255,0.2); }
+    50%       { box-shadow: 0 0 40px rgba(0,194,255,0.5); }
+}
+
+/* Mensaje de éxito inline (registro) */
+.success-inline {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    display: none;
+}
+.success-inline.show { display: block; }
+.success-inline__icon {
+    font-size: 3.5rem;
+    margin-bottom: var(--space-4);
+    color: var(--color-success);
+}
+.success-inline__title {
+    font-family: var(--font-display);
+    font-size: var(--size-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+}
+.success-inline__msg {
+    font-size: var(--size-sm);
+    color: var(--color-text-secondary);
+}

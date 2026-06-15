@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Auditoría y Logs</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     LOGS TÉCNICOS Y AUDITORÍA
+     Prototipo: registro detallado con filtros por nivel y módulo,
+     uptime del sistema, auto-refresco.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Auditoría y Logs</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+                <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="dot dot--success"></span>
+                    <span class="text-xs" style="color:var(--color-success);font-weight:600">UPTIME: <span id="uptime">99.9%</span></span>
+                </div>
+                <button class="btn btn--ghost btn--sm" id="btn-refresh">Actualizar</button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Registro de Actividad</h1>
+                <p class="content-header__sub">Auditoría completa de todas las acciones realizadas en el sistema.
+                    <span id="auto-refresh-label" class="text-xs text-muted"></span>
+                </p>
+            </div>
+
+            <!-- Alertas del sistema -->
+            <div class="page-section">
+                <h2 class="page-section__title">Alertas Activas</h2>
+                <div id="alertas-section" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-3)"></div>
+            </div>
+
+            <!-- Filtros de logs -->
+            <div class="toolbar">
+                <select class="filter-select" id="filter-nivel">
+                    <option value="">Todos los niveles</option>
+                    <option value="Error">Error</option>
+                    <option value="Warning">Warning</option>
+                    <option value="Info">Info</option>
+                </select>
+                <select class="filter-select" id="filter-modulo">
+                    <option value="">Todos los módulos</option>
+                    <option value="Auth">Auth</option>
+                    <option value="API">API</option>
+                    <option value="Database">Database</option>
+                    <option value="Storage">Storage</option>
+                    <option value="General">General</option>
+                </select>
+                <div class="search-box" style="min-width:180px">
+                    <input class="form-input" type="text" id="search-log" placeholder="Buscar en logs...">
+                </div>
+            </div>
+
+            <!-- Tabla de logs -->
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha / Hora</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Módulo</th>
+                            <th>Nivel</th>
+                            <th>Resultado</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-body"></tbody>
+                </table>
+            </div>
+            <p class="text-xs text-muted" style="margin-top:var(--space-3)" id="log-count"></p>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script> DB.init();
+    const currentUser = Session.requireRole('Administrador');
+    if (currentUser) {
+        renderSidebar('nav-auditoria', currentUser);
+        startClock('clock');
+        renderAlertas();
+        renderLogs();
+        bindFiltros();
+        iniciarAutoRefresh();
+    }
+
+    /* ---- Alertas ---- */
+    function renderAlertas() {
+        const alertas = DB.alertas.getAll();
+        const sevColor = { 'Alta':'var(--color-danger)', 'Media':'var(--color-warning)', 'Baja':'var(--color-success)', 'Crítica':'var(--color-danger)' };
+        document.getElementById('alertas-section').innerHTML = alertas.map(a => `
+            <div style="padding:var(--space-4);background:var(--color-bg-surface);
+                 border:1px solid var(--color-bg-border);border-radius:var(--radius-md);
+                 border-left:3px solid ${sevColor[a.severidad]||'var(--color-primary)'}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2);margin-bottom:var(--space-2)">
+                    <span style="font-weight:500;font-size:var(--size-sm)">${a.mensaje}</span>
+                    ${Badge.estado(a.estado)}
+                </div>
+                <div style="display:flex;gap:var(--space-3)">
+                    <span class="badge badge--info">${a.tipo}</span>
+                    <span class="text-xs" style="color:${sevColor[a.severidad]};font-weight:600">${a.severidad}</span>
+                    <span class="text-xs text-muted">${fmtDate(a.fecha_hora)}</span>
+                </div>
+            </div>`).join('');
+    }
+
+    /* ---- Logs ---- */
+    function renderLogs() {
+        const nivel   = document.getElementById('filter-nivel').value;
+        const modulo  = document.getElementById('filter-modulo').value;
+        const busqueda = document.getElementById('search-log').value.toLowerCase();
+        const usuarios = DB.usuarios.getAll();
+
+        let lista = DB.logs.getAll().filter(l => {
+            const u = usuarios.find(x => x.id === l.usuario_id);
+            const texto = (l.accion + ' ' + (u ? u.nombre + ' ' + u.apellido : '') + ' ' + (l.ip || '')).toLowerCase();
+            return (!nivel || l.nivel === nivel) &&
+                   (!modulo || l.modulo === modulo) &&
+                   (!busqueda || texto.includes(busqueda));
+        });
+
+        document.getElementById('log-count').textContent = `${lista.length} registro(s)`;
+        const tbody = document.getElementById('logs-body');
+        if (!lista.length) { tbody.innerHTML = emptyRow(7, 'Sin registros con esos filtros.'); return; }
+
+        const resultadoColor = { 'Exitoso':'var(--color-success)', 'Fallido':'var(--color-danger)', 'Bloqueado':'var(--color-warning)' };
+
+        tbody.innerHTML = lista.map(l => {
+            const u = usuarios.find(x => x.id === l.usuario_id);
+            const nombreU = u ? `${u.nombre} ${u.apellido}` : '<span class="text-muted">Sistema</span>';
+            return `<tr>
+                <td class="text-xs font-mono text-muted">${fmtDate(l.fecha_hora)}</td>
+                <td class="text-sm">${nombreU}</td>
+                <td style="max-width:250px" class="text-sm" title="${l.accion}">${l.accion}</td>
+                <td><span class="badge badge--info">${l.modulo||'—'}</span></td>
+                <td>${Badge.nivel(l.nivel)}</td>
+                <td><span style="font-size:var(--size-xs);font-weight:600;color:${resultadoColor[l.resultado]||'inherit'}">${l.resultado}</span></td>
+                <td class="text-xs font-mono text-muted">${l.ip||'—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function bindFiltros() {
+        document.getElementById('filter-nivel').addEventListener('change', renderLogs);
+        document.getElementById('filter-modulo').addEventListener('change', renderLogs);
+        document.getElementById('search-log').addEventListener('input', renderLogs);
+        document.getElementById('btn-refresh').addEventListener('click', () => { renderLogs(); renderAlertas(); Toast.info('Logs actualizados.'); });
+    }
+
+    /* ---- Auto-refresco cada 30 segundos ---- */
+    function iniciarAutoRefresh() {
+        let secs = 30;
+        const label = document.getElementById('auto-refresh-label');
+        setInterval(() => {
+            secs--;
+            label.textContent = `Auto-refresco en ${secs}s`;
+            if (secs <= 0) { secs = 30; renderLogs(); renderAlertas(); }
+        }, 1000);
+    }
+</script>
+</body>
+</html>

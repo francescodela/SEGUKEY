@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Panel Empleado</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     PANEL PRINCIPAL DEL EMPLEADO
+     Prototipo: resumen personal, archivos disponibles,
+     último acceso, solicitudes pendientes/aprobadas.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Panel del Empleado</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title" id="welcome-title">Bienvenido</h1>
+                <p class="content-header__sub">Último acceso: <strong id="ultimo-acceso" style="color:var(--color-primary)">—</strong>
+                </p>
+            </div>
+
+            <!-- Métricas del empleado -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-card__label">Archivos Accedidos</div>
+                    <div class="metric-card__value" id="m-accedidos">—</div>
+                    <div class="metric-card__sub">total en mi cuenta</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Pendientes</div>
+                    <div class="metric-card__value" id="m-pendientes" style="color:var(--color-warning)">—</div>
+                    <div class="metric-card__sub">en revisión</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Protegidos</div>
+                    <div class="metric-card__value" id="m-protegidos" style="color:var(--color-success)">—</div>
+                    <div class="metric-card__sub">encriptados</div>
+                    </div>
+                <div class="metric-card">
+                    <div class="metric-card__label">Restringidos</div>
+                    <div class="metric-card__value" id="m-restringidos" style="color:var(--color-danger)">—</div>
+                    <div class="metric-card__sub">acceso limitado</div>
+                    </div>
+            </div>
+
+            <!-- Archivos disponibles con opción de descarga -->
+            <div class="card">
+                <div class="card__header">
+                    <span class="card__title">Mis Archivos Disponibles</span>
+                    <a href="archivos.html" class="btn btn--primary btn--sm">Gestionar archivos</a>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th><th>Tipo</th><th>Tamaño</th><th>Estado</th><th>Fecha</th><th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archivos-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script> DB.init();
+    const currentUser = Session.requireRole('Empleado');
+    if (currentUser) {
+        renderSidebar('nav-dashboard', currentUser);
+        startClock('clock');
+        loadEmpleadoDashboard();
+    }
+
+    function loadEmpleadoDashboard() {
+        const u = DB.usuarios.getById(currentUser.id);
+        document.getElementById('welcome-title').textContent = `Hola, ${u.nombre} ${u.apellido}`;
+        document.getElementById('ultimo-acceso').textContent = fmtDate(u.ultimo_acceso);
+
+        const archivos = DB.respaldos.getByUsuario(currentUser.id);
+        document.getElementById('m-accedidos').textContent   = archivos.length;
+        document.getElementById('m-pendientes').textContent  = archivos.filter(a => a.estado === 'Pendiente').length;
+        document.getElementById('m-protegidos').textContent  = archivos.filter(a => a.estado === 'Protegido').length;
+        document.getElementById('m-restringidos').textContent = archivos.filter(a => a.estado === 'Restringido').length;
+
+        const tbody = document.getElementById('archivos-body');
+        if (!archivos.length) {
+            tbody.innerHTML = emptyRow(6, 'No tienes archivos aún. ¡Sube tu primer archivo!');
+        } else {
+            tbody.innerHTML = archivos.map(a => `
+                <tr>
+                    <td>
+                        <span style="font-weight:500">${a.nombre_archivo}</span>
+                    </td>
+                    <td><span class="badge badge--info">${a.tipo}</span></td>
+                    <td class="text-sm text-muted">${fmtSize(a.tamano)}</td>
+                    <td>${Badge.estado(a.estado)}</td>
+                    <td class="text-xs text-muted">${fmtDate(a.fecha_hora)}</td>
+                    <td>
+                        ${a.estado !== 'Restringido'
+                            ? `<button class="btn btn--success btn--sm" onclick="simularDescarga('${a.nombre_archivo}')">Descargar</button>`
+                            : `<span class="text-xs text-muted">Sin acceso</span>`}
+                    </td>
+                </tr>`).join('');
+        }
+    }
+
+    function simularDescarga(nombre) {
+        DB.log(currentUser.id, `Descarga de archivo: ${nombre}`, 'Storage');
+        Toast.success(`Descargando: ${nombre}`);
+    }
+</script>
+</body>
+</html>

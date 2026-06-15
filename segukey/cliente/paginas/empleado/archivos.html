@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Mis Archivos</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     GESTIÓN DE ARCHIVOS DEL EMPLEADO
+     Prototipo: ver, buscar, subir y filtrar archivos protegidos.
+     Filtros: tipo (PDF, DOC, XLS, Imagen) y estado.
+     CRUD: CREATE (subir), READ (listar), UPDATE (editar estado), DELETE
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Mis Archivos</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Archivos Protegidos</h1>
+                <p class="content-header__sub">Gestiona tus archivos encriptados. Tamaño máximo: 10 MB por archivo.</p>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="search-box">
+                    <input class="form-input" type="text" id="search-arch" placeholder="Buscar archivo...">
+                </div>
+                <select class="filter-select" id="filter-tipo">
+                    <option value="">Todos los tipos</option>
+                    <option value="PDF">PDF</option>
+                    <option value="DOC">DOC</option>
+                    <option value="XLS">XLS</option>
+                    <option value="Imagen">Imagen</option>
+                    <option value="Otro">Otro</option>
+                </select>
+                <select class="filter-select" id="filter-est">
+                    <option value="">Todos los estados</option>
+                    <option value="Protegido">Protegido</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Restringido">Restringido</option>
+                </select>
+                <button class="btn btn--primary" id="btn-subir-archivo">Subir Archivo</button>
+            </div>
+
+            <!-- Tabla de archivos -->
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Archivo</th><th>Tipo</th><th>Tamaño</th><th>Estado</th><th>Subido</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archivos-body"></tbody>
+                </table>
+            </div>
+            <p class="text-xs text-muted" style="margin-top:var(--space-3)" id="total-label"></p>
+        </div>
+    </main>
+</div>
+
+<!-- Modal subir archivo (CREATE) -->
+<div class="modal-overlay hidden" id="modal-subir">
+    <div class="modal" style="max-width:460px">
+        <div class="modal__header">
+            <span class="modal__title">Subir Nuevo Archivo</span>
+            <button class="modal__close" onclick="cerrarModalSubir()">×</button>
+        </div>
+        <div class="modal__body">
+            <!-- Zona de selección / arrastre de archivo -->
+            <div id="drop-zone" style="border:2px dashed var(--color-bg-border);border-radius:var(--radius-md);
+                 padding:var(--space-6) var(--space-4);text-align:center;cursor:pointer;
+                 transition:border-color var(--transition-fast),background var(--transition-fast)">
+                <p style="font-weight:500;margin-bottom:var(--space-1)">Haz clic para elegir un archivo</p>
+                <p class="text-xs text-muted">o arrástralo aquí — máx. 10 MB</p>
+                <input type="file" id="a-file" style="display:none">
+            </div>
+
+            <!-- Vista previa del archivo seleccionado -->
+            <div id="file-preview" class="hidden" style="margin-top:var(--space-4);padding:var(--space-3) var(--space-4);
+                 background:var(--color-bg-elevated);border:1px solid var(--color-bg-border);border-radius:var(--radius-md);
+                 display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+                <div style="overflow:hidden">
+                    <div id="file-preview-nombre" style="font-weight:500;font-size:var(--size-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+                    <div id="file-preview-meta" class="text-xs text-muted"></div>
+                </div>
+                <button type="button" class="btn btn--ghost btn--sm" onclick="quitarArchivoSeleccionado()">Quitar</button>
+            </div>
+
+            <div class="form-group" style="margin-top:var(--space-4)">
+                <label class="form-label">Estado inicial</label>
+                <select class="form-select" id="a-estado">
+                    <option value="Pendiente">Pendiente (revisión)</option>
+                    <option value="Protegido">Protegido</option>
+                </select>
+            </div>
+
+            <!-- Barra de progreso (oculta hasta que se suba) -->
+            <div id="upload-progress" class="hidden" style="margin-top:var(--space-3)">
+                <div style="height:6px;border-radius:var(--radius-full);background:var(--color-bg-elevated);overflow:hidden">
+                    <div id="upload-progress-bar" style="height:100%;width:0%;background:var(--color-primary);transition:width 0.2s"></div>
+                </div>
+            </div>
+
+            <div id="a-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                 background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                 border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-top:var(--space-3)"></div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" onclick="cerrarModalSubir()">Cancelar</button>
+            <button class="btn btn--primary" id="btn-subir" onclick="subirArchivo()" disabled>Subir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal editar archivo (UPDATE) -->
+<div class="modal-overlay hidden" id="modal-editar">
+    <div class="modal" style="max-width:420px">
+        <div class="modal__header">
+            <span class="modal__title">Editar Archivo</span>
+            <button class="modal__close" onclick="Modal.close('modal-editar')">×</button>
+        </div>
+        <div class="modal__body">
+            <input type="hidden" id="e-id">
+            <div class="form-group">
+                <label class="form-label">Nombre del archivo</label>
+                <input class="form-input" type="text" id="e-nombre">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-select" id="e-estado">
+                    <option value="Protegido">Protegido</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Restringido">Restringido</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" onclick="Modal.close('modal-editar')">Cancelar</button>
+            <button class="btn btn--primary" onclick="guardarEdicion()">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script>
+    let currentUser;
+    let archivosCache = [];
+    let archivoSeleccionado = null;
+
+    (async function init() {
+        DB.init();
+        currentUser = Session.requireRole('Empleado');
+        if (currentUser) {
+            renderSidebar('nav-archivos', currentUser);
+            startClock('clock');
+            await renderArchivos();
+            bindFiltros();
+            bindDropZone();
+        }
+    })();
+
+    /* ---- READ: listar archivos con filtros ---- */
+    async function renderArchivos() {
+        const busqueda = document.getElementById('search-arch').value.toLowerCase();
+        const filtroTipo = document.getElementById('filter-tipo').value;
+        const filtroEst  = document.getElementById('filter-est').value;
+
+        archivosCache = await DB.respaldos.getByUsuario(currentUser.id);
+
+        let lista = archivosCache.filter(a => {
+            const matchText = !busqueda || a.nombre_archivo.toLowerCase().includes(busqueda);
+            const matchTipo = !filtroTipo || a.tipo === filtroTipo;
+            const matchEst  = !filtroEst  || a.estado === filtroEst;
+            return matchText && matchTipo && matchEst;
+        });
+
+        document.getElementById('total-label').textContent = `${lista.length} archivo(s)`;
+        const tbody = document.getElementById('archivos-body');
+        if (!lista.length) { tbody.innerHTML = emptyRow(6, 'No hay archivos con esos filtros.'); return; }
+
+        tbody.innerHTML = lista.map(a => `
+            <tr>
+                <td>
+                    <span style="font-weight:500">${a.nombre_archivo}</span>
+                </td>
+                <td><span class="badge badge--info">${a.tipo}</span></td>
+                <td class="text-sm text-muted">${fmtSize(a.tamano)}</td>
+                <td>${Badge.estado(a.estado)}</td>
+                <td class="text-xs text-muted">${fmtDate(a.fecha_hora)}</td>
+                <td>
+                    <div class="table-actions">
+                        <button class="btn btn--ghost btn--sm" onclick="abrirEditar(${a.id})" title="Editar">Editar</button>
+                        ${a.estado !== 'Restringido'
+                            ? `<button class="btn btn--success btn--sm" onclick="descargarArchivo(${a.id}, '${a.nombre_archivo.replace(/'/g, "\\'")}')">Descargar</button>`
+                            : ''}
+                        <button class="btn btn--danger btn--sm" onclick="eliminarArchivo(${a.id})" title="Eliminar">Eliminar</button>
+                    </div>
+                </td>
+            </tr>`).join('');
+    }
+
+    function bindFiltros() {
+        document.getElementById('search-arch').addEventListener('input', renderArchivos);
+        document.getElementById('filter-tipo').addEventListener('change', renderArchivos);
+        document.getElementById('filter-est').addEventListener('change', renderArchivos);
+        document.getElementById('btn-subir-archivo')?.addEventListener('click', abrirModalSubir);
+    }
+
+    /* ---- Selección de archivo (click o drag&drop) ---- */
+    function bindDropZone() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('a-file');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) seleccionarArchivo(fileInput.files[0]);
+        });
+
+        ['dragover', 'dragenter'].forEach(ev => dropZone.addEventListener(ev, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--color-primary)';
+            dropZone.style.background = 'var(--color-primary-glow)';
+        }));
+
+        ['dragleave', 'dragend'].forEach(ev => dropZone.addEventListener(ev, () => {
+            dropZone.style.borderColor = 'var(--color-bg-border)';
+            dropZone.style.background = 'transparent';
+        }));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--color-bg-border)';
+            dropZone.style.background = 'transparent';
+            if (e.dataTransfer.files[0]) seleccionarArchivo(e.dataTransfer.files[0]);
+        });
+    }
+
+    function seleccionarArchivo(file) {
+        const errDiv = document.getElementById('a-error');
+        errDiv.style.display = 'none';
+
+        if (file.size > 10 * 1024 * 1024) {
+            errDiv.textContent = 'El archivo supera el límite de 10 MB.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        archivoSeleccionado = file;
+        document.getElementById('file-preview-nombre').textContent = file.name;
+        document.getElementById('file-preview-meta').textContent = fmtSize(Math.ceil(file.size / 1024));
+        document.getElementById('file-preview').classList.remove('hidden');
+        document.getElementById('drop-zone').classList.add('hidden');
+        document.getElementById('btn-subir').disabled = false;
+    }
+
+    function quitarArchivoSeleccionado() {
+        archivoSeleccionado = null;
+        document.getElementById('a-file').value = '';
+        document.getElementById('file-preview').classList.add('hidden');
+        document.getElementById('drop-zone').classList.remove('hidden');
+        document.getElementById('btn-subir').disabled = true;
+    }
+
+    function abrirModalSubir() {
+        quitarArchivoSeleccionado();
+        document.getElementById('a-estado').value = 'Pendiente';
+        document.getElementById('a-error').style.display = 'none';
+        document.getElementById('upload-progress').classList.add('hidden');
+        Modal.open('modal-subir');
+    }
+
+    function cerrarModalSubir() {
+        Modal.close('modal-subir');
+        quitarArchivoSeleccionado();
+    }
+
+    /* ---- CREATE: subir archivo real al backend ---- */
+    async function subirArchivo() {
+        const errDiv = document.getElementById('a-error');
+        errDiv.style.display = 'none';
+
+        if (!archivoSeleccionado) {
+            errDiv.textContent = 'Selecciona un archivo primero.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        const estado = document.getElementById('a-estado').value;
+        const btn = document.getElementById('btn-subir');
+        const progressWrap = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('upload-progress-bar');
+
+        btn.disabled = true;
+        progressWrap.classList.remove('hidden');
+        progressBar.style.width = '40%';
+
+        let r;
+        try {
+            r = await DB.respaldos.upload(archivoSeleccionado, estado);
+        } catch (err) {
+            console.error('Error al subir archivo:', err);
+            errDiv.textContent = 'No se pudo conectar con el servidor.';
+            errDiv.style.display = 'block';
+            btn.disabled = false;
+            progressWrap.classList.add('hidden');
+            return;
+        }
+
+        progressBar.style.width = '100%';
+
+        if (!r || !r.ok) {
+            errDiv.textContent = (r && r.msg) || 'No se pudo subir el archivo.';
+            errDiv.style.display = 'block';
+            btn.disabled = false;
+            progressWrap.classList.add('hidden');
+            return;
+        }
+
+        Toast.success(`Archivo "${archivoSeleccionado.name}" subido correctamente.`);
+        cerrarModalSubir();
+        await renderArchivos();
+    }
+
+    /* ---- UPDATE: editar nombre y estado ---- */
+    function abrirEditar(id) {
+        const a = archivosCache.find(x => x.id === id);
+        if (!a) return;
+        document.getElementById('e-id').value = id;
+        document.getElementById('e-nombre').value = a.nombre_archivo;
+        document.getElementById('e-estado').value = a.estado;
+        Modal.open('modal-editar');
+    }
+
+    async function guardarEdicion() {
+        const id     = parseInt(document.getElementById('e-id').value);
+        const nombre = document.getElementById('e-nombre').value.trim();
+        const estado = document.getElementById('e-estado').value;
+        if (!nombre) { Toast.error('El nombre no puede estar vacío.'); return; }
+        const r = await DB.respaldos.update(id, { nombre_archivo: nombre, estado }, currentUser.id);
+        if (!r || !r.ok) { Toast.error((r && r.msg) || 'No se pudo actualizar.'); return; }
+        Modal.close('modal-editar');
+        Toast.success('Archivo actualizado correctamente.');
+        await renderArchivos();
+    }
+
+    /* ---- DELETE: eliminar archivo ---- */
+    function eliminarArchivo(id) {
+        const a = archivosCache.find(x => x.id === id);
+        if (!a) return;
+        Modal.confirm(`¿Eliminar el archivo <strong>${a.nombre_archivo}</strong>?`, async () => {
+            const r = await DB.respaldos.delete(id, currentUser.id);
+            if (!r || !r.ok) { Toast.error((r && r.msg) || 'No se pudo eliminar.'); return; }
+            Toast.success('Archivo eliminado.');
+            await renderArchivos();
+        });
+    }
+
+    /* ---- DESCARGAR: archivo físico desde el backend ---- */
+    async function descargarArchivo(id, nombre) {
+        const r = await DB.respaldos.descargar(id, nombre);
+        if (!r || !r.ok) { Toast.error((r && r.msg) || 'No se pudo descargar el archivo.'); return; }
+        Toast.success(`Descargando: ${nombre}`);
+    }
+</script>
+</body>
+</html>

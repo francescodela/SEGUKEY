@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Perfil Tester</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     PERFIL DEL TESTER
+     Prototipo: cargo (Tester/QA/Soporte), permisos técnicos,
+     datos de contacto, fecha de registro.
+     Separación clara de roles vs Administrador y Empleado.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Mi Perfil</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Perfil del Tester</h1>
+                <p class="content-header__sub">Identidad técnica y permisos habilitados en la plataforma</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Tarjeta de perfil -->
+                <div class="card">
+                    <div style="text-align:center;padding:var(--space-6) 0">
+                        <div id="t-avatar" style="width:80px;height:80px;border-radius:50%;
+                             background:rgba(99,102,241,0.15);border:2px solid var(--color-info);
+                             display:flex;align-items:center;justify-content:center;
+                             font-family:var(--font-display);font-size:var(--size-2xl);font-weight:700;
+                             color:var(--color-info);margin:0 auto var(--space-4)">??</div>
+                        <div id="t-nombre" style="font-family:var(--font-display);font-size:var(--size-xl);font-weight:700"></div>
+                        <div id="t-cargo" class="text-muted text-sm" style="margin-top:var(--space-1)"></div>
+                        <div style="margin-top:var(--space-3)">
+                            <span class="badge badge--info">Tester QA</span>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid var(--color-bg-border);padding-top:var(--space-5);
+                         display:flex;flex-direction:column;gap:var(--space-2)">
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Correo</span>
+                            <span class="status-indicator__value text-sm" id="t-correo">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Teléfono</span>
+                            <span class="status-indicator__value text-sm" id="t-tel">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Estado</span>
+                            <span id="t-estado">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Último acceso</span>
+                            <span class="status-indicator__value text-xs text-muted" id="t-acceso">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Registrado en</span>
+                            <span class="status-indicator__value text-xs text-muted" id="t-creado">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Permisos técnicos habilitados -->
+                    <div style="margin-top:var(--space-5);border-top:1px solid var(--color-bg-border);padding-top:var(--space-5)">
+                        <p class="form-label" style="margin-bottom:var(--space-3)">Permisos técnicos habilitados</p>
+                        <div style="display:flex;flex-direction:column;gap:var(--space-2)" id="permisos-tecnicos">
+                            <div class="status-indicator">
+                                <span class="status-indicator__label">Ejecutar pruebas</span>
+                                <span class="badge badge--success">Habilitado</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-indicator__label">Ver logs técnicos</span>
+                                <span id="perm-auditoria">—</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-indicator__label">Ver archivos protegidos</span>
+                                <span id="perm-archivos">—</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-indicator__label">Editar usuarios</span>
+                                <span class="badge badge--danger">Sin acceso</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de edición -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Editar Datos de Contacto</span>
+                    </div>
+                    <form id="form-tester-perfil" novalidate>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label class="form-label" for="tp-nombre">Nombre *</label>
+                                <input class="form-input" type="text" id="tp-nombre">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="tp-apellido">Apellido *</label>
+                                <input class="form-input" type="text" id="tp-apellido">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tp-correo">Correo *</label>
+                            <input class="form-input" type="email" id="tp-correo">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tp-tel">Teléfono</label>
+                            <input class="form-input" type="text" id="tp-tel">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tp-cargo">Cargo / Especialidad</label>
+                            <select class="form-select" id="tp-cargo">
+                                <option value="Tester QA">Tester QA</option>
+                                <option value="Tester">Tester</option>
+                                <option value="QA Engineer">QA Engineer</option>
+                                <option value="Soporte Técnico">Soporte Técnico</option>
+                            </select>
+                        </div>
+
+                        <div style="border-top:1px solid var(--color-bg-border);padding-top:var(--space-5);margin-top:var(--space-2)">
+                            <p class="form-label" style="margin-bottom:var(--space-3)">Cambiar contraseña (opcional)</p>
+                            <div class="form-group">
+                                <label class="form-label" for="tp-pass-actual">Contraseña actual</label>
+                                <input class="form-input" type="password" id="tp-pass-actual" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="tp-pass-nueva">Nueva contraseña</label>
+                                <input class="form-input" type="password" id="tp-pass-nueva" placeholder="••••••••">
+                            </div>
+                        </div>
+
+                        <div id="tp-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                             background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                             border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)"></div>
+
+                        <button class="btn btn--primary btn--full" type="submit">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script>
+    let currentUser;
+
+    (async function init() {
+        DB.init();
+        currentUser = Session.requireRole('Tester');
+        if (currentUser) {
+            renderSidebar('nav-perfil', currentUser);
+            startClock('clock');
+            await cargarPerfil();
+        }
+    })();
+
+    async function cargarPerfil() {
+        const u = await DB.usuarios.getById(currentUser.id);
+        if (!u) return;
+
+        document.getElementById('t-avatar').textContent  = u.nombre[0] + u.apellido[0];
+        document.getElementById('t-nombre').textContent  = u.nombre + ' ' + u.apellido;
+        document.getElementById('t-cargo').textContent   = u.cargo || 'Tester QA';
+        document.getElementById('t-correo').textContent  = u.correo;
+        document.getElementById('t-tel').textContent     = u.telefono || '—';
+        document.getElementById('t-estado').innerHTML    = Badge.estado(u.estado);
+        document.getElementById('t-acceso').textContent  = fmtDate(u.ultimo_acceso);
+        document.getElementById('t-creado').textContent  = fmtDate(u.fecha_creacion);
+
+        document.getElementById('perm-auditoria').innerHTML = u.permiso_ver_auditoria
+            ? '<span class="badge badge--success">Habilitado</span>'
+            : '<span class="badge badge--danger">Sin acceso</span>';
+        document.getElementById('perm-archivos').innerHTML = u.permiso_ver_archivos
+            ? '<span class="badge badge--success">Habilitado</span>'
+            : '<span class="badge badge--danger">Sin acceso</span>';
+
+        // Formulario
+        document.getElementById('tp-nombre').value   = u.nombre;
+        document.getElementById('tp-apellido').value = u.apellido;
+        document.getElementById('tp-correo').value   = u.correo;
+        document.getElementById('tp-tel').value      = u.telefono || '';
+        document.getElementById('tp-cargo').value    = u.cargo || 'Tester QA';
+    }
+
+    document.getElementById('form-tester-perfil').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errDiv = document.getElementById('tp-error');
+        errDiv.style.display = 'none';
+
+        const nombre   = document.getElementById('tp-nombre').value.trim();
+        const apellido = document.getElementById('tp-apellido').value.trim();
+        const correo   = document.getElementById('tp-correo').value.trim();
+        const tel      = document.getElementById('tp-tel').value.trim();
+        const cargo    = document.getElementById('tp-cargo').value;
+        const passActual = document.getElementById('tp-pass-actual').value;
+        const passNueva  = document.getElementById('tp-pass-nueva').value;
+
+        if (!nombre || !apellido || !correo) {
+            errDiv.textContent = 'Nombre, apellido y correo son obligatorios.';
+            errDiv.style.display = 'block'; return;
+        }
+
+        let data = { nombre, apellido, correo, telefono: tel, cargo };
+
+        if (passActual || passNueva) {
+            if (!passActual || !passNueva) {
+                errDiv.textContent = 'Completa ambos campos de contraseña para cambiarla.';
+                errDiv.style.display = 'block'; return;
+            }
+            if (passNueva.length < 6) {
+                errDiv.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+                errDiv.style.display = 'block'; return;
+            }
+            data.contrasena = passNueva;
+            data.contrasena_actual = passActual;
+        }
+
+        let r;
+        try {
+            r = await DB.usuarios.update(currentUser.id, data);
+        } catch (err) {
+            console.error('Error al actualizar perfil:', err);
+            errDiv.textContent = 'No se pudo conectar con el servidor.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        if (!r || !r.ok) {
+            errDiv.textContent = (r && r.msg) || 'No se pudo actualizar el perfil.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        Session.set(r.data);
+        fillSidebarUser(r.data);
+        document.getElementById('tp-pass-actual').value = '';
+        document.getElementById('tp-pass-nueva').value  = '';
+        Toast.success('Perfil actualizado correctamente.');
+        await cargarPerfil();
+    });
+</script>
+</body>
+</html>

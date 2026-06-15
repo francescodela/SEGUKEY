@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segukey — Mi Perfil</title>
+    <link rel="stylesheet" href="../../estilos/variables.css">
+    <link rel="stylesheet" href="../../estilos/base.css">
+    <link rel="stylesheet" href="../../estilos/componentes.css">
+    <link rel="stylesheet" href="../../estilos/diseno.css">
+</head>
+<body>
+<!-- ==============================
+     PERFIL DEL EMPLEADO
+     Prototipo: ver y editar datos personales,
+     nombre, correo, teléfono, área, cargo, último acceso.
+     ============================== -->
+<div class="app-layout">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="topbar">
+            <span class="topbar__title">Mi Perfil</span>
+            <div class="topbar__right">
+                <span class="topbar__time" id="clock"></span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h1 class="content-header__title">Perfil Personal</h1>
+                <p class="content-header__sub">Consulta y edita tu información de usuario en la plataforma</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Tarjeta de perfil visual -->
+                <div class="card">
+                    <div style="text-align:center;padding:var(--space-6) 0">
+                        <div id="avatar-grande" style="width:80px;height:80px;border-radius:50%;
+                             background:var(--color-primary-glow);border:2px solid var(--color-primary);
+                             display:flex;align-items:center;justify-content:center;
+                             font-family:var(--font-display);font-size:var(--size-2xl);font-weight:700;
+                             color:var(--color-primary);margin:0 auto var(--space-4)">??</div>
+                        <div id="perfil-nombre" style="font-family:var(--font-display);font-size:var(--size-xl);font-weight:700"></div>
+                        <div id="perfil-cargo" class="text-muted text-sm" style="margin-top:var(--space-1)"></div>
+                        <div style="margin-top:var(--space-3)" id="perfil-rol"></div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:var(--space-2);border-top:1px solid var(--color-bg-border);padding-top:var(--space-5)">
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Correo</span>
+                            <span class="status-indicator__value text-sm" id="perfil-correo">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Teléfono</span>
+                            <span class="status-indicator__value text-sm" id="perfil-telefono">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Área / Depto.</span>
+                            <span class="status-indicator__value text-sm" id="perfil-area">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Estado</span>
+                            <span id="perfil-estado">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Último acceso</span>
+                            <span class="status-indicator__value text-xs text-muted" id="perfil-acceso">—</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-indicator__label">Cuenta creada</span>
+                            <span class="status-indicator__value text-xs text-muted" id="perfil-creado">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de edición (UPDATE) -->
+                <div class="card">
+                    <div class="card__header">
+                        <span class="card__title">Editar Información</span>
+                    </div>
+                    <form id="form-perfil" novalidate>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label class="form-label" for="p-nombre">Nombre *</label>
+                                <input class="form-input" type="text" id="p-nombre">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="p-apellido">Apellido *</label>
+                                <input class="form-input" type="text" id="p-apellido">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="p-correo">Correo electrónico *</label>
+                            <input class="form-input" type="email" id="p-correo">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="p-telefono">Teléfono</label>
+                            <input class="form-input" type="text" id="p-telefono" placeholder="300 000 0000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="p-area">Área / Departamento</label>
+                            <input class="form-input" type="text" id="p-area" placeholder="Tecnología">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="p-cargo">Cargo</label>
+                            <input class="form-input" type="text" id="p-cargo" placeholder="Analista">
+                        </div>
+
+                        <!-- Cambio de contraseña -->
+                        <div style="border-top:1px solid var(--color-bg-border);padding-top:var(--space-5);margin-top:var(--space-2)">
+                            <p class="form-label" style="margin-bottom:var(--space-3)">Cambiar contraseña (opcional)</p>
+                            <div class="form-group">
+                                <label class="form-label" for="p-pass-actual">Contraseña actual</label>
+                                <input class="form-input" type="password" id="p-pass-actual" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="p-pass-nueva">Nueva contraseña</label>
+                                <input class="form-input" type="password" id="p-pass-nueva" placeholder="••••••••">
+                            </div>
+                        </div>
+
+                        <div id="perfil-error" style="display:none;color:var(--color-danger);font-size:var(--size-sm);
+                             background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                             border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)"></div>
+
+                        <button class="btn btn--primary btn--full" type="submit">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="../../scripts/api.js"></script>
+<script src="../../scripts/interfaz.js"></script>
+<script src="../../scripts/barra_lateral.js"></script>
+<script>
+    let currentUser;
+
+    (async function init() {
+        DB.init();
+        currentUser = Session.requireRole('Empleado');
+        if (currentUser) {
+            renderSidebar('nav-perfil', currentUser);
+            startClock('clock');
+            await cargarPerfil();
+        }
+    })();
+
+    async function cargarPerfil() {
+        const u = await DB.usuarios.getById(currentUser.id);
+        if (!u) return;
+
+        // Tarjeta visual
+        document.getElementById('avatar-grande').textContent = u.nombre[0] + u.apellido[0];
+        document.getElementById('perfil-nombre').textContent   = u.nombre + ' ' + u.apellido;
+        document.getElementById('perfil-cargo').textContent    = u.cargo || 'Sin cargo asignado';
+        document.getElementById('perfil-rol').innerHTML        = Badge.rol(u.rol);
+        document.getElementById('perfil-correo').textContent   = u.correo;
+        document.getElementById('perfil-telefono').textContent = u.telefono || '—';
+        document.getElementById('perfil-area').textContent     = u.area_departamento || '—';
+        document.getElementById('perfil-estado').innerHTML     = Badge.estado(u.estado);
+        document.getElementById('perfil-acceso').textContent   = fmtDate(u.ultimo_acceso);
+        document.getElementById('perfil-creado').textContent   = fmtDate(u.fecha_creacion);
+
+        // Formulario
+        document.getElementById('p-nombre').value   = u.nombre;
+        document.getElementById('p-apellido').value = u.apellido;
+        document.getElementById('p-correo').value   = u.correo;
+        document.getElementById('p-telefono').value = u.telefono || '';
+        document.getElementById('p-area').value     = u.area_departamento || '';
+        document.getElementById('p-cargo').value    = u.cargo || '';
+    }
+
+    /* ---- UPDATE: guardar cambios de perfil ---- */
+    document.getElementById('form-perfil').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errDiv = document.getElementById('perfil-error');
+        errDiv.style.display = 'none';
+
+        const nombre   = document.getElementById('p-nombre').value.trim();
+        const apellido = document.getElementById('p-apellido').value.trim();
+        const correo   = document.getElementById('p-correo').value.trim();
+        const telefono = document.getElementById('p-telefono').value.trim();
+        const area     = document.getElementById('p-area').value.trim();
+        const cargo    = document.getElementById('p-cargo').value.trim();
+        const passActual = document.getElementById('p-pass-actual').value;
+        const passNueva  = document.getElementById('p-pass-nueva').value;
+
+        if (!nombre || !apellido || !correo) {
+            errDiv.textContent = 'Nombre, apellido y correo son obligatorios.';
+            errDiv.style.display = 'block'; return;
+        }
+
+        let data = { nombre, apellido, correo, telefono, area_departamento: area, cargo };
+
+        // Cambio de contraseña: el backend valida la contraseña actual
+        if (passActual || passNueva) {
+            if (!passActual || !passNueva) {
+                errDiv.textContent = 'Completa ambos campos de contraseña para cambiarla.';
+                errDiv.style.display = 'block'; return;
+            }
+            if (passNueva.length < 6) {
+                errDiv.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+                errDiv.style.display = 'block'; return;
+            }
+            data.contrasena = passNueva;
+            data.contrasena_actual = passActual;
+        }
+
+        let r;
+        try {
+            r = await DB.usuarios.update(currentUser.id, data);
+        } catch (err) {
+            console.error('Error al actualizar perfil:', err);
+            errDiv.textContent = 'No se pudo conectar con el servidor.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        if (!r || !r.ok) {
+            errDiv.textContent = (r && r.msg) || 'No se pudo actualizar el perfil.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        Session.set(r.data);
+        fillSidebarUser(r.data);
+        document.getElementById('p-pass-actual').value = '';
+        document.getElementById('p-pass-nueva').value  = '';
+        Toast.success('Perfil actualizado correctamente.');
+        await cargarPerfil();
+    });
+</script>
+</body>
+</html>
